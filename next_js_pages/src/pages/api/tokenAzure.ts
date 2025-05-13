@@ -9,20 +9,22 @@ export default async function handler(
     return;
   }
 
-  const url =
-    'https://login.microsoftonline.com/76d81621-b9a9-4786-bb8f-a2efa839eee2/oauth2/v2.0/token';
-
   const params = new URLSearchParams();
-  params.append(process.env.AZURE_CLIENT_ID!, '8a45b31d-2f19-462b-8a2e-821b592c9044');
-  params.append(process.env.AZURE_CLIENT_SECRET!, 'n2m8Q~POJfvd-x3COrXRSwk1xx6bVd1DkSMVtcsz');
-  params.append(process.env.AZURE_SCOPE!, 'api://8a45b31d-2f19-462b-8a2e-821b592c9044/.default');
-  params.append(process.env.AZURE_GRANT_TYPE!, 'client_credentials');
+  params.append('client_id', process.env.AZURE_CLIENT_ID!);
+  params.append('client_secret', process.env.AZURE_CLIENT_SECRET!);
+  params.append('scope', process.env.AZURE_SCOPE!);
+  params.append('grant_type', process.env.AZURE_GRANT_TYPE!);
 
   try {
     const azureResponse = await fetch(process.env.AZURE_URL!, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
+        'X-Coppel-Date-Request': '2024-08-08T14:17:50.859Z',
+        'X-Coppel-Latitude': '24.71093149082847',
+        'X-Coppel-Longitude': '-107.38788217024636',
+        'X-Coppel-TransactionId': 'ts-0002',
+        'X-Coppel-Target-Oauth': 'CPL-001'
       },
       body: params.toString(),
     });

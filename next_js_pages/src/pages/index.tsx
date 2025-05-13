@@ -61,6 +61,7 @@ export default function Home() {
         EntraID & Auth0
       </button>
       {/* <div>{userData && JSON.stringify(userData)}</div> */}
+      <div>{authService && authService.getAccessToken()}</div>
     </div>
   );
 }
