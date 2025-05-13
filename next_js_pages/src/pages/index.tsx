@@ -1,32 +1,66 @@
-import { AuthService } from 'guard-module';
-import { useEffect, useState } from 'react';
-
+import { AuthService } from "guard-module";
+import { useEffect, useState } from "react";
 
 export default function Home() {
-
   const [authService, setAuthService] = useState<AuthService>();
+  const [userData, setUserData] = useState<Map<String, String>>();
+  const [data, setData] = useState(null);
 
-  function onClickLogin() {
-    authService?.login('/');
+  function handleClick() {
+    if (authService?.isAuthenticated()) {
+      authService.logout("http://localhost:3000");
+    } else {
+      authService?.login("/");
+    }
   }
+
+  const fetchData = async (path: string) => {
+    console.log(authService?.getAccessToken());
+
+    const url = process.env.NEXT_PUBLIC_APIGEE_URL + path + '/protected'
+    const res = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': 'Bearer ' + authService?.getAccessToken()
+      },
+    });
+
+    const result = await res.json();
+    setData(result);
+  };
 
   useEffect(() => {
     setAuthService(AuthService.getInstance());
-  }, [])
-
+    setUserData(AuthService.getInstance()?.getUserData());
+  }, []);
 
   return (
-    <div
-      className={`grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]`}
-    >
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <button onClick={onClickLogin} className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full">
-          {authService?.isAuthenticated() ? 'LogOut' : 'Login'}
-        </button>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-
-      </footer>
+    <div>
+      <button
+        onClick={handleClick}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+      >
+        {authService?.isAuthenticated() ? "LogOut" : "Login"}
+      </button>
+      <button
+        onClick={() => fetchData('entraID')}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+      >
+        EntraID
+      </button>
+      <button
+        onClick={() => fetchData('auth0')}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+      >
+        Auth0
+      </button>
+      <button
+        onClick={() => fetchData('auth0-entraID')}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+      >
+        EntraID & Auth0
+      </button>
+      {/* <div>{userData && JSON.stringify(userData)}</div> */}
     </div>
   );
 }
