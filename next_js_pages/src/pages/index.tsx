@@ -3,17 +3,9 @@ import { useEffect, useState } from "react";
 
 export default function Home() {
   const [authService, setAuthService] = useState<AuthService>();
-  const [userData, setUserData] = useState<Map<String, String>>();
-  const [token, setToken] = useState<string>();
+  const [userData, setUserData] = useState<any>();
+  const [token, setToken] = useState<string | null>();
   const [data, setData] = useState(null);
-
-  function handleClick() {
-    if (authService?.isAuthenticated()) {
-      authService.logout("http://localhost:3000");
-    } else {
-      authService?.login("/");
-    }
-  }
 
   const fetchData = async (path: string) => {
     console.log(await authService?.getAccessToken());
@@ -30,36 +22,71 @@ export default function Home() {
     setData(result);
   };
 
+  function getJwtPayload (token: string) {
+    var base64Url = token.split('.')[1];
+    var base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    var jsonPayload = decodeURIComponent(window.atob(base64).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+
+    return JSON.parse(jsonPayload);
+  }
+
   useEffect(() => {
-    setAuthService(AuthService.getInstance());
-    setUserData(AuthService.getInstance()?.getUserData());
-    AuthService.getInstance().getAccessToken().then(
-      (token) => setToken(token)
-    );
+    const authService = AuthService.getInstance();
+    setAuthService(authService);
+    
+    (async () => {
+      if (await authService.isAuthenticated()) {
+        setUserData(await authService.getUserData());
+      }
+
+      setToken(await authService.getAccessToken());
+    })();
   }, []);
 
   return (
     <div>
-      <div>
-        <button
-          onClick={handleClick}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-        >
-          {authService?.isAuthenticated() ? "LogOut" : "Login"}
-        </button>
-        {authService?.isAuthenticated() && <button
-          onClick={() => authService?.refreshAccessToken()}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-        >
-          Refresh Token
-        </button>}
-        {authService?.isAuthenticated() && <button
-          onClick={() => authService?.loginDeleteAccount("/")}
-          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
-        >
-          Delete Account
-        </button>}
-      </div>
+      {
+        !userData &&
+        <div>
+          <button
+            onClick={() => authService?.login("/")}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          >
+            Login
+          </button>
+          <button
+            onClick={() => authService?.createAccount("/")}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          >
+            Create Account
+          </button>
+        </div>
+      }
+      {
+        userData &&
+        <div>
+          <button
+            onClick={() => authService?.logout("http://localhost:3000")}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          >
+            LogOut
+          </button>
+          {/* <button
+            // onClick={() => authService?.refreshAccessToken()}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          >
+            Refresh Token
+          </button> */}
+          <button
+            onClick={() => authService?.loginDeleteAccount("/")}
+            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full"
+          >
+            Delete Account
+          </button>
+        </div>
+      }
       <div>
         <button
           onClick={() => fetchData('entraID')}
@@ -80,8 +107,11 @@ export default function Home() {
           EntraID & Auth0
         </button>
       </div>
-      {/* <div>{userData && JSON.stringify(userData)}</div> */}
-      <pre>{authService && token && JSON.stringify(authService.getJwtPayload(token), undefined, 2)}</pre>
+
+      <br />
+      <pre>{authService && token && JSON.stringify(getJwtPayload(token), undefined, 2)}</pre>
+      <br />
+      <pre>{userData && JSON.stringify(userData, undefined, 2)}</pre>
     </div>
   );
 }
